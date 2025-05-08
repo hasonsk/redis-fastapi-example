@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Học từ vựng tiếng Anh</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            gap: 20px;
+        }
+        .input-section {
+            flex: 1;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .word-list {
+            flex: 1;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-height: 400px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #444;
+            margin-bottom: 15px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .btn-delete {
+            background-color: #f44336;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-delete:hover {
+            background-color: #d32f2f;
+        }
+        .search-box {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .search-box input {
+            flex: 1;
+            margin-bottom: 0;
+            margin-right: 10px;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        .nav-btn {
+            background-color: #2196F3;
+            margin-right: 10px;
+        }
+        .nav-btn:hover {
+            background-color: #0b7dda;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <h1>Học từ vựng tiếng Anh</h1>
+
+    <div class="nav-buttons container">
+        <a href="/"><button class="nav-btn">Trang chủ</button></a>
+        <a href="/review"><button class="nav-btn">Ôn tập từ vựng</button></a>
+    </div>
+
+    <div class="container">
+        <div class="input-section">
+            <h2>Thêm từ mới</h2>
+            <form action="/add" method="post">
+                <div>
+                    <label for="word">Từ tiếng Anh:</label>
+                    <input type="text" id="word" name="word" required placeholder="Nhập từ tiếng Anh">
+                </div>
+                <div>
+                    <label for="meaning">Nghĩa tiếng Việt:</label>
+                    <textarea id="meaning" name="meaning" required placeholder="Nhập nghĩa tiếng Việt"></textarea>
+                </div>
+                <button type="submit">Lưu từ vựng</button>
+            </form>
+        </div>
+
+        <div class="word-list">
+            <h2>Danh sách từ vựng</h2>
+
+            <!-- Form tìm kiếm -->
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Tìm kiếm từ hoặc nghĩa..." value="{{ search }}">
+                <button onclick="searchVocabulary()">Tìm kiếm</button>
+            </div>
+
+            <table id="vocabularyTable">
+                <thead>
+                    <tr>
+                        <th>Từ</th>
+                        <th>Nghĩa</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in words %}
+                    <tr>
+                        <td>{{ item.word }}</td>
+                        <td>{{ item.meaning }}</td>
+                        <td><button class="btn-delete" onclick="deleteWord('{{ item.word }}')">Xóa</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Tải lại danh sách từ vựng khi trang được load
+        window.addEventListener('DOMContentLoaded', loadVocabulary);
+
+        function loadVocabulary(searchTerm = '') {
+            let url = '/api/words';
+            if (searchTerm) {
+                url += `?search=${encodeURIComponent(searchTerm)}`;
+            }
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.querySelector('#vocabularyTable tbody');
+                    tableBody.innerHTML = '';
+
+                    if (data.length === 0) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = '<td colspan="3" style="text-align: center;">Không tìm thấy từ vựng nào</td>';
+                        tableBody.appendChild(row);
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.word}</td>
+                            <td>${item.meaning}</td>
+                            <td><button class="btn-delete" onclick="deleteWord('${item.word}')">Xóa</button></td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error loading vocabulary:', error));
+        }
+
+        // Hàm xóa từ vựng
+        function deleteWord(word) {
+            if (confirm(`Bạn có chắc chắn muốn xóa từ "${word}" không?`)) {
+                fetch(`/api/words/${word}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        // Tải lại danh sách từ vựng
+                        const searchInput = document.getElementById('searchInput');
+                        loadVocabulary(searchInput.value);
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => console.error('Error deleting word:', error));
+            }
+        }
+
+        // Hàm tìm kiếm từ vựng
+        function searchVocabulary() {
+            const searchTerm = document.getElementById('searchInput').value;
+            loadVocabulary(searchTerm);
+
+            // Cập nhật URL để phản ánh tìm kiếm
+            const url = new URL(window.location);
+            if (searchTerm) {
+                url.searchParams.set('search', searchTerm);
+            } else {
+                url.searchParams.delete('search');
+            }
+            window.history.pushState({}, '', url);
+        }
+
+        // Bắt sự kiện nhấn Enter cho ô tìm kiếm
+        document.getElementById('searchInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                searchVocabulary();
+            }
+        });
+    </script>
+</body>
+</html>
